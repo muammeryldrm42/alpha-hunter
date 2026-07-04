@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ALPHA MEME — filtered on-chain alpha</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">ALPHA</span><span class="brand-tri">▲</span><span class="brand-mark dim">MEME</span>
+  </div>
+  <div class="funnel" id="funnel" title="Tokens scanned vs tokens that survived the filter">
+    <span id="funnel-scanned">—</span> scanned
+    <span class="funnel-arrow">→</span>
+    <span id="funnel-passed" class="funnel-pass">—</span> passed
+  </div>
+  <div class="top-controls">
+    <input id="search" type="text" placeholder="Search token / paste CA" autocomplete="off" spellcheck="false" />
+    <select id="minLiq" title="Minimum liquidity gate">
+      <option value="3000">Liq ≥ $3k</option>
+      <option value="5000">Liq ≥ $5k</option>
+      <option value="10000" selected>Liq ≥ $10k</option>
+      <option value="25000">Liq ≥ $25k</option>
+      <option value="50000">Liq ≥ $50k</option>
+      <option value="100000">Liq ≥ $100k</option>
+    </select>
+    <select id="maxAge" title="Maximum pair age gate">
+      <option value="24">≤ 24h</option>
+      <option value="72" selected>≤ 3d</option>
+      <option value="168">≤ 7d</option>
+    </select>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab active" data-tab="top">TOP ALPHA</button>
+  <button class="tab hot" data-tab="hot">HOT BUYS</button>
+  <button class="tab whale" data-tab="whale">WHALE ALERT</button>
+  <button class="tab smart" data-tab="smart">SMART TRADER</button>
+  <button class="tab fresh" data-tab="fresh">FRESH</button>
+  <button class="tab okx" data-tab="okx">OKX SIGNALS</button>
+</nav>
+
+<main>
+  <div class="status" id="status">Scanning chain…</div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div class="drawer-ident" id="d-ident"></div>
+    <button class="drawer-close" id="d-close" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="d-chart-wrap"><iframe id="d-chart" title="GeckoTerminal chart" loading="lazy" allow="clipboard-write"></iframe></div>
+    <div class="d-section" id="d-score"></div>
+    <div class="d-section" id="d-gates"></div>
+    <div class="d-links" id="d-links"></div>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<footer class="foot">
+  ALPHA MEME runs every token through 8 hard gates before it can appear here. Heuristics, not financial advice — always DYOR.
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>
