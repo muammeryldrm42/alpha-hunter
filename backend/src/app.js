@@ -58,29 +58,34 @@ const streaks = new Map();     // address -> { streak, lastTs, lastScore }
 const TG_TOKEN = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
 const TG_CHAT = String(process.env.TELEGRAM_CHAT_ID || "").trim();
 const tgSent = new Set();
+const escHtml = (x) => String(x || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+async function tgSend(text) {
+  const res = await fetch(`https://api.telegram.org/bot${encodeURIComponent(TG_TOKEN)}/sendMessage`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: "HTML", disable_web_page_preview: true })
+  });
+  const body = await res.json().catch(() => ({}));
+  return { ok: res.ok && body.ok !== false, body };
+}
 async function tgNotify(item) {
   if (!TG_TOKEN || !TG_CHAT) return;
   const key = `top:${item.address}`;
   if (tgSent.has(key)) return;
-  tgSent.add(key);
   const p = item.pair || {};
   const text = [
-    `🦅 *ALPHA MEME — TOP ALPHA*`,
-    `*${item.name}* (${item.symbol}) — Score ${item.alphaScore}`,
-    `CA: \`${item.address}\``,
+    `🦅 <b>ALPHA MEME — TOP ALPHA</b>`,
+    `<b>${escHtml(item.name)}</b> (${escHtml(item.symbol)}) — Score <b>${item.alphaScore}</b>`,
+    `CA: <code>${escHtml(item.address)}</code>`,
     `Signal MC: $${Math.round(safeNum(p.marketCap)).toLocaleString("en-US")}`,
-    `1h: ${safeNum(p.ch1h).toFixed(1)}% | 24h vol: $${Math.round(safeNum(p.vol24)).toLocaleString("en-US")}`,
-    `Liq: $${Math.round(safeNum(p.liquidity)).toLocaleString("en-US")}`,
-    `Vol24h: $${Math.round(safeNum(p.vol24)).toLocaleString("en-US")}`,
-    `Signals: ${item.signals.join(", ") || "—"}`,
-    `https://dexscreener.com/solana/${item.address}`
+    `Liq: $${Math.round(safeNum(p.liquidity)).toLocaleString("en-US")} | Vol24h: $${Math.round(safeNum(p.vol24)).toLocaleString("en-US")}`,
+    `1h: ${safeNum(p.ch1h).toFixed(1)}%`,
+    `Signals: ${escHtml(item.signals.join(", ") || "—")}`,
+    `https://dexscreener.com/solana/${escHtml(item.address)}`
   ].join("\n");
   try {
-    await fetch(`https://api.telegram.org/bot${encodeURIComponent(TG_TOKEN)}/sendMessage`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ chat_id: TG_CHAT, text, parse_mode: "Markdown" })
-    });
+    const r = await tgSend(text);
+    if (r.ok) tgSent.add(key); // dedup only on success so failures retry
   } catch (_) { /* never break API on TG failure */ }
 }
 
@@ -439,6 +444,19 @@ function filterTab(items, tab) {
 app.get("/api/health", (req, res) =>
   res.json({ ok: true, name: "alpha-meme", okxLive: !!okxUrl, tgLive: !!(TG_TOKEN && TG_CHAT), blacklisted: mcBlack.size })
 );
+
+// One-shot Telegram wiring test: open /api/tg-test in the browser.
+app.get("/api/tg-test", async (req, res) => {
+  if (!TG_TOKEN || !TG_CHAT) {
+    return res.json({ ok: false, reason: "TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID env vars missing" });
+  }
+  try {
+    const r = await tgSend("✅ ALPHA MEME test — Telegram bağlantısı çalışıyor.");
+    res.json({ ok: r.ok, telegram: r.body });
+  } catch (e) {
+    res.json({ ok: false, reason: e.message });
+  }
+});
 
 let feedInflight = null;
 app.get("/api/alpha", async (req, res) => {
